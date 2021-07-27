@@ -1,29 +1,21 @@
 import sys
 import tkinter as tk
-from typing import Callable, NewType, Tuple
+from typing import Tuple
 
 
 class UIElement:
+    """
+    This class wraps any element in the UI with its name. There can not be repeated names or 'ids'
+    """
     def __init__(self, name: str, element) -> None:
         self.name = name
         self.element = element
 
 
-constructor = Callable[..., UIElement]
-objet_id = NewType('objet_id', str)
-row = NewType('row', int)
-column = NewType('column', int)
-
-
-class Ref:
-    def __init__(self, obj): self.obj = obj
-
-    def get(self): return self.obj
-
-    def set(self, obj): self.obj = obj
-
-
 class UICreationMethods:
+    """
+    A bunch of methods some classes may inherit for creating tkinter Widgets
+    """
     def __init__(self):
         self.window: tk.Tk | None = None
         self.object_frame: tk.Frame | None = None
@@ -57,6 +49,22 @@ class UICreationMethods:
 
 
 class UIGrid(UICreationMethods):
+    """
+    Class in charge of creating grids. All elements of the grid go into a custom frame that then is packed into
+    its parent frame.
+
+    Example:
+        UIGrid(
+                self.object_frame,
+                (0, 0, 'has_q', 'entry', {'target': None}),
+                (0, 1, 'has_pick', 'dd_menu', {'store_in': self.has, 'options': self.OPTIONS, 'command': update_ui}),
+            ),
+
+        Notice it receives the name of its parent frame and all elements as a tuples of:
+            row: int, column: int, name: str, constructor: UICreationMethod, constructor_args: Dictionary
+
+        Some of the methods defined within UICreationMethods may have some obligatory args for `constructor_args`
+    """
     def __init__(self, parent, *body: Tuple[int, int, str, str, dict]) -> None:
         super().__init__()
         self.object_frame = tk.Frame(parent)
@@ -71,6 +79,11 @@ class UIGrid(UICreationMethods):
 
 
 class Window(UICreationMethods):
+    """
+    The main program. Everything merges to conform the application's UI
+
+    self.body is where all UI elements are declared. It expects types UIElement and UIGrid.
+    """
     def __init__(self):
         super().__init__()
 
@@ -86,7 +99,7 @@ class Window(UICreationMethods):
         self.main_frame = self.frame(width=420, height=300)
         self.main_frame.place(anchor=tk.CENTER, relx=.5, rely=.5)
 
-        # All ui elements go in this one, which is later palced in the center of the main frame
+        # All ui elements go in this one, which is later placed in the center of the main frame
         self.object_frame = tk.Frame()
 
         # Currency pickers options
@@ -97,12 +110,11 @@ class Window(UICreationMethods):
         self.wants = []
 
         def update_ui(*_, **__):
-            print("Lmao")
             self.in_label.configure(
                 text="Convert from " + str(self.has[0].get()) + " to " + str(self.wants[0].get()) + ":")
 
         def get_conversion(*_, **__):
-            print(self.has_q.get(), self.wants_q.get(), self.has[0].get(), self.wants[0].get())
+            pass
 
         def invert(*_, **__):
             temp = self.has[0].get()
@@ -115,18 +127,20 @@ class Window(UICreationMethods):
             self.wants_q.delete(0, 'end')
             self.wants_q.insert(0, str(temp))
 
+            get_conversion()
+
         # The body of the program
         self.body(
             UIElement('in_label', self.label(text="Convert from USD to USD:")),
             UIGrid(
                 self.object_frame,
-                (1, 0, 'has_q', 'entry', {'target': None}),
-                (1, 1, 'has_picker', 'dd_menu', {'store_in': self.has, 'options': self.OPTIONS, 'command': update_ui}),
-                (2, 0, 'wants_q', 'entry', {'target': None}),
-                (
-                    2, 1, 'wants_picker', 'dd_menu',
-                    {'store_in': self.wants, 'options': self.OPTIONS, 'command': update_ui}
-                ),
+                (0, 0, 'has_q', 'entry', {'target': None}),
+                (0, 1, 'has_pick', 'dd_menu', {'store_in': self.has, 'options': self.OPTIONS, 'command': update_ui})
+            ),
+            UIGrid(
+                self.object_frame,
+                (0, 0, 'wants_q', 'entry', {'target': None}),
+                (0, 1, 'wants_pick', 'dd_menu', {'store_in': self.wants, 'options': self.OPTIONS, 'command': update_ui})
             ),
             UIGrid(
                 self.object_frame,
@@ -135,7 +149,7 @@ class Window(UICreationMethods):
             )
         )
 
-        # Last tweaks
+        # Last tweaks to UI
         self.wants_q.bind("<Key>", lambda a: "break")
         self.wants[0].set('MXN')
         update_ui()
@@ -146,6 +160,7 @@ class Window(UICreationMethods):
     def body(self, *args: UIElement or UIGrid):
         for element in args:
             if type(element) is UIElement:
+
                 if hasattr(self, element.name):
                     print(
                         f"Error: `element.name` '{element.name}' (`element.element`: {element.element})\
