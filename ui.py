@@ -78,12 +78,42 @@ class UIGrid(UICreationMethods):
             self.members.append(element)
 
 
-class Window(UICreationMethods):
+class Application(UICreationMethods):
     """
     The main program. Everything merges to conform the application's UI
 
     self.body is where all UI elements are declared. It expects types UIElement and UIGrid.
     """
+    def check_if_exists(self, element, from_grid=False):
+        name = 'ui_element' if not from_grid else 'grid_element'
+        if hasattr(self, element.name):
+            print(
+                f"ERROR -- Can not append new attribute with name '{element.name}' of {name} to self.\n"
+                f"'{element.name}' attribute name of {name} already exists within self:\n\n"
+                f"{name}:\n"
+                f"\t{name}.name= '{element.name}'\n",
+                f"\t{name}.element = {element.element}\n\n"
+                f"self:"
+                f"\n\tself.{element.name}: {self.__getattribute__(element.name)}\n\n"
+                f"Hint: Make sure no UIElement has the same name as any other UIElement or any attribute of self"
+            )
+            sys.exit(9)
+
+    def body(self, *args: UIElement or UIGrid):
+        for element in args:
+            if type(element) is UIElement:
+                self.check_if_exists(element)
+
+                self.__setattr__(element.name, element.element)
+                self.__getattribute__(element.name).pack()
+
+            elif type(element) is UIGrid:
+                for grid_element in element.members:
+                    self.check_if_exists(grid_element, True)
+                    self.__setattr__(grid_element.name, grid_element.element)
+
+                element.object_frame.pack()
+
     def __init__(self):
         super().__init__()
 
@@ -152,33 +182,9 @@ class Window(UICreationMethods):
         # Last tweaks to UI
         self.wants_q.bind("<Key>", lambda a: "break")
         self.wants[0].set('MXN')
-        update_ui()
 
         self.object_frame.place(in_=self.main_frame, anchor=tk.CENTER, relx=.5, rely=.5)
         self.window.mainloop()
 
-    def body(self, *args: UIElement or UIGrid):
-        for element in args:
-            if type(element) is UIElement:
 
-                if hasattr(self, element.name):
-                    print(
-                        f"Error: `element.name` '{element.name}' (`element.element`: {element.element})\
- has the same id as `self.{element.name}` \
-(value: {self.__getattribute__(element.name)})")
-                    sys.exit(9)
-                self.__setattr__(element.name, element.element)
-                self.__getattribute__(element.name).pack()
-            elif type(element) is UIGrid:
-                for grid_element in element.members:
-                    if hasattr(self, grid_element.name):
-                        print(
-                            f"Error: element.name ('{grid_element.name}' has the same id as `self.{grid_element.name}` \
-(value: {self.__getattribute__(grid_element.name)})")
-                        sys.exit(9)
-                    self.__setattr__(grid_element.name, grid_element.element)
-
-                element.object_frame.pack()
-
-
-Window()
+Application()
