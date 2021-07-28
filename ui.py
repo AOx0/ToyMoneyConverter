@@ -1,6 +1,7 @@
 import sys
 import tkinter as tk
 from typing import Tuple
+from get_values import Money
 
 
 class UIElement:
@@ -120,20 +121,15 @@ class Application(UICreationMethods):
         # Window config
         self.window = tk.Tk()
         self.window.title("Money Converter")
-
         self.window.geometry("420x300")
-        self.window.eval('tk::PlaceWindow . center')
-        self.window.resizable(False, False)
 
-        self.window.anchor = "center"
         self.main_frame = self.frame(width=420, height=300)
         self.main_frame.place(anchor=tk.CENTER, relx=.5, rely=.5)
 
         # All ui elements go in this one, which is later placed in the center of the main frame
         self.object_frame = tk.Frame()
-
         # Currency pickers options
-        self.OPTIONS = ("USD", "MXN", "COL")
+        self.OPTIONS = Money.get_names()
 
         # Used to store the value of currency pickers
         self.has = []
@@ -180,7 +176,7 @@ class Application(UICreationMethods):
         )
 
         # Last tweaks to UI
-        self.wants_q.bind("<Key>", lambda a: "break")
+        self.wants_q.bind("<Key>", lambda _: "break")
         self.wants[0].set('MXN')
 
         self.object_frame.place(in_=self.main_frame, anchor=tk.CENTER, relx=.5, rely=.5)
